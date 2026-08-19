@@ -48,7 +48,9 @@ export default function App() {
   // the widest possible editor does not have to collapse them again each visit.
   const [panels, setPanels] = useState<{ learning: boolean; diagram: boolean; sensei: boolean }>(() => {
     const stored = localStorage.getItem('jojo_panels');
-    const fallback = { learning: true, diagram: true, sensei: true };
+    // First run only: on a narrow laptop four columns do not fit, and the
+    // diagram is the one a student can most easily open on demand.
+    const fallback = { learning: true, diagram: window.innerWidth >= 1500, sensei: true };
     if (!stored) return fallback;
     try {
       return { ...fallback, ...(JSON.parse(stored) as Partial<typeof fallback>) };
@@ -435,7 +437,7 @@ Guide the student toward the next small edit. Do not reveal the full reference a
           gridTemplateColumns: [
             panels.learning ? `${widths.learning}px` : '0px',
             panels.learning ? 'var(--split-w)' : '0px',
-            'minmax(360px, 1fr)',
+            'minmax(320px, 1fr)',
             panels.diagram ? 'var(--split-w)' : '0px',
             panels.diagram ? `${widths.diagram}px` : '0px',
             panels.sensei ? 'var(--split-w)' : '0px',

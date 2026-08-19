@@ -94,6 +94,16 @@ body {
   min-height: 100vh;
 }
 
+/* The app is a fixed-height column: header, work area, footer. Sizing the
+   work area by subtracting assumed chrome heights meant that a scrollbar in
+   one axis overflowed the other, which then produced a scrollbar there too. */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
 button,
 input,
 textarea {
@@ -115,8 +125,9 @@ button:disabled {
      and a collapsed panel plus its splitter go to 0px. */
   --split-w: 10px;
   gap: 0;
-  width: 100vw;
-  height: calc(100vh - 52px - 32px);
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   padding: 12px;
   transition: grid-template-columns 0.25s ease;
 }
@@ -880,7 +891,9 @@ h2 {
 
 .auth-shell,
 .admin-shell {
-  min-height: calc(100vh - 52px);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: 24px;
   background: var(--bg);
 }
@@ -1507,4 +1520,27 @@ h2 {
 .mermaid-stage .labelBkg {
   fill: var(--diagram-bg) !important;
   opacity: 1;
+}
+
+/* Question picker: full-width select, navigation beneath it */
+.question-select {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid var(--border-muted);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary-dark);
+  font-size: 13px;
+}
+
+.sequential-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.sequential-controls .icon-text-button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
 }

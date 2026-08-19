@@ -30,33 +30,34 @@ export default function LearningPanel({
         <ListChecks size={20} />
       </div>
       <div className="question-picker">
-        <div className="sequential-controls" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+        {/* The picker gets its own row: sharing one with Prev and Next left it
+            about 130px on a narrow panel, enough for "Q1. Print a…". */}
+        <select
+          className="question-select"
+          aria-label="Choose a question"
+          value={selectedQuestion.id}
+          onChange={(event) => onQuestionChange(Number(event.target.value))}
+        >
+          {questions.map((question) => (
+            <option key={question.id} value={question.id}>
+              Q{question.id}. {question.title}
+            </option>
+          ))}
+        </select>
+        <div className="sequential-controls">
           <button
             className="icon-text-button"
             type="button"
             disabled={selectedQuestion.id <= 1}
             onClick={() => onQuestionChange(selectedQuestion.id - 1)}
-            style={{ padding: '6px 10px', fontSize: '0.85rem' }}
           >
             <ChevronLeft size={16} /> Prev
           </button>
-          <select
-            value={selectedQuestion.id}
-            onChange={(event) => onQuestionChange(Number(event.target.value))}
-            style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border-color, #ccc)' }}
-          >
-            {questions.map((question) => (
-              <option key={question.id} value={question.id}>
-                Q{question.id}. {question.title}
-              </option>
-            ))}
-          </select>
           <button
             className="icon-text-button"
             type="button"
             disabled={selectedQuestion.id >= questions.length}
             onClick={() => onQuestionChange(selectedQuestion.id + 1)}
-            style={{ padding: '6px 10px', fontSize: '0.85rem' }}
           >
             Next <ChevronRight size={16} />
           </button>
