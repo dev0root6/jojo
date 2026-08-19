@@ -303,18 +303,61 @@ h2 {
   font-weight: 700;
 }
 
+/* Editor: gutter and textarea share one set of metrics so the numbers align.
+   --code-line is pinned in px because a unitless line-height rounds
+   differently between a div and a textarea. */
+.code-editor-shell {
+  --code-line: 22px;
+  --code-pad-y: 16px;
+  display: flex;
+  flex: 1;
+  min-height: 280px;
+  overflow: hidden;
+  background: var(--editor-bg);
+}
+
+.code-gutter {
+  flex: 0 0 auto;
+  padding: var(--code-pad-y) 10px var(--code-pad-y) 14px;
+  overflow: hidden;
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid var(--editor-border);
+  color: var(--terminal-label);
+  font: 14px/var(--code-line) "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.code-gutter-line {
+  height: var(--code-line);
+  padding-left: 4px;
+  border-radius: 3px 0 0 3px;
+}
+
+.code-gutter-line.is-error {
+  color: #ff6b6b;
+  font-weight: 700;
+  background: rgba(255, 107, 107, 0.16);
+}
+
+.code-gutter-line.is-warning {
+  color: #fbbf24;
+  font-weight: 700;
+  background: rgba(251, 191, 36, 0.14);
+}
+
 .code-editor {
   flex: 1;
-  width: 100%;
-  min-height: 280px;
+  min-width: 0;
   resize: none;
   border: 0;
   outline: 0;
-  padding: 16px;
-  background: var(--editor-bg);
+  padding: var(--code-pad-y) 16px;
+  background: transparent;
   color: var(--editor-text);
-  font: 14px/1.55 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font: 14px/var(--code-line) "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   tab-size: 4;
+  white-space: pre;
+  overflow: auto;
 }
 
 .io-grid {

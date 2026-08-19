@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckCircle, Play, Sparkles } from 'lucide-react';
 import type { RunResult, TestOutcome } from './api';
 import { cleanStderr, describeRuntimeIssue, parseDiagnostics, type Diagnostic } from '../lib/diagnostics';
+import CodeEditor from './CodeEditor';
 
 interface EditorPanelProps {
   code: string;
@@ -65,6 +66,26 @@ export default function EditorPanel({
 
   const hasCompiledCurrentCode = Boolean(compiledCode !== null && compiledCode === code);
 
+  // Line markers come from the last compile, so they are only meaningful while
+  // the buffer still matches the code that produced them.
+  const flagged = useMemo(() => {
+    const buildFailure = testResults.find((item) => item.compileOutput);
+    const raw = buildFailure
+      ? [buildFailure.compileOutput, cleanStderr(buildFailure.stderr)]
+      : [output?.compile_output, cleanStderr(output?.stderr)];
+    const diagnostics = parseDiagnostics(raw.filter(Boolean).join('\n'));
+    const errors = new Set<number>();
+    const warnings = new Set<number>();
+    for (const item of diagnostics) {
+      if (item.line === undefined) continue;
+      if (item.severity === 'error') errors.add(item.line);
+      else if (item.severity === 'warning') warnings.add(item.line);
+    }
+    return { errors, warnings };
+  }, [output, testResults]);
+
+  const showMarkers = hasCompiledCurrentCode || testResults.length > 0;
+
   // Status 3 means it built and exited cleanly. A leftover warning (an unused
   // variable, say) should not block submitting — missing headers and other real
   // mistakes are compile errors now, so they never reach status 3.
@@ -117,12 +138,11 @@ export default function EditorPanel({
           </button>
         </div>
       </div>
-      <textarea
-        className="code-editor"
-        spellCheck={false}
+      <CodeEditor
         value={code}
-        onChange={(event) => onCodeChange(event.target.value)}
-        aria-label="C source code"
+        onChange={onCodeChange}
+        errorLines={showMarkers ? flagged.errors : undefined}
+        warningLines={showMarkers ? flagged.warnings : undefined}
       />
       <div className="output-panel">
         <div className="output-panel-header">
