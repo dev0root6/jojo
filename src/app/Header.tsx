@@ -1,7 +1,7 @@
 import atriaLogo from '../assets/logos/aitlogo.png';
 import iseLogoLight from '../assets/logos/new_ise.png';
 import iseLogoDark from '../assets/logos/ise-untitled.png';
-import { Sun, Moon, Lightbulb, LogIn, LogOut, Users } from 'lucide-react';
+import { Sun, Moon, Lightbulb, LogIn, LogOut, Users, ListChecks, Network } from 'lucide-react';
 import type { RoomInfo } from './api';
 import JojoMark from './JojoMark';
 
@@ -10,6 +10,10 @@ interface HeaderProps {
   onThemeToggle?: () => void;
   senseiOpen?: boolean;
   onSenseiToggle?: () => void;
+  learningOpen?: boolean;
+  onLearningToggle?: () => void;
+  diagramOpen?: boolean;
+  onDiagramToggle?: () => void;
   activeRoom?: RoomInfo | null;
   onJoinRoom?: () => void;
   onLeaveRoom?: () => void;
@@ -20,6 +24,10 @@ export default function Header({
   onThemeToggle,
   senseiOpen = true,
   onSenseiToggle,
+  learningOpen = true,
+  onLearningToggle,
+  diagramOpen = true,
+  onDiagramToggle,
   activeRoom,
   onJoinRoom,
   onLeaveRoom,
@@ -75,17 +83,41 @@ export default function Header({
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
       )}
-      {onSenseiToggle && (
-        <button
-          className="icon-button"
-          onClick={onSenseiToggle}
-          aria-label="Toggle Sensei Panel"
-          title="Toggle Sensei Panel (Ctrl+/)"
-          style={{ marginLeft: 4, border: 'none', background: 'transparent' }}
-        >
-          <Lightbulb size={20} color={senseiOpen ? 'var(--accent)' : 'var(--text-muted)'} />
-        </button>
-      )}
+      <div className="panel-toggles" role="group" aria-label="Show or hide panels">
+        {onLearningToggle && (
+          <button
+            className={'panel-toggle' + (learningOpen ? ' is-on' : '')}
+            onClick={onLearningToggle}
+            aria-pressed={learningOpen}
+            aria-label="Toggle questions panel"
+            title="Questions panel (Ctrl+1)"
+          >
+            <ListChecks size={17} />
+          </button>
+        )}
+        {onDiagramToggle && (
+          <button
+            className={'panel-toggle' + (diagramOpen ? ' is-on' : '')}
+            onClick={onDiagramToggle}
+            aria-pressed={diagramOpen}
+            aria-label="Toggle diagram panel"
+            title="Diagram panel (Ctrl+2)"
+          >
+            <Network size={17} />
+          </button>
+        )}
+        {onSenseiToggle && (
+          <button
+            className={'panel-toggle' + (senseiOpen ? ' is-on' : '')}
+            onClick={onSenseiToggle}
+            aria-pressed={senseiOpen}
+            aria-label="Toggle Sensei panel"
+            title="Sensei panel (Ctrl+/)"
+          >
+            <Lightbulb size={17} />
+          </button>
+        )}
+      </div>
     </header>
   );
 }

@@ -129,6 +129,9 @@ button:disabled {
 .app-shell.hide-sensei {
   --col-sensei: 0fr;
 }
+.app-shell.hide-diagram {
+  --col-diagram: 0fr;
+}
 
 .editor-panel,
 .diagram-panel,
@@ -145,6 +148,7 @@ button:disabled {
 }
 
 .app-shell.hide-learning .learning-panel,
+.app-shell.hide-diagram .diagram-panel,
 .app-shell.hide-sensei .sensei-panel {
   opacity: 0;
   border-width: 0;
@@ -345,20 +349,55 @@ h2 {
   background: rgba(251, 191, 36, 0.14);
 }
 
-.code-editor {
+.code-surface {
+  position: relative;
   flex: 1;
   min-width: 0;
-  resize: none;
-  border: 0;
-  outline: 0;
+}
+
+/* The highlight layer and the textarea are stacked and must render text
+   identically; every shared metric lives here. */
+.code-highlight,
+.code-editor {
+  position: absolute;
+  inset: 0;
+  margin: 0;
   padding: var(--code-pad-y) 16px;
-  background: transparent;
-  color: var(--editor-text);
+  border: 0;
   font: 14px/var(--code-line) "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   tab-size: 4;
   white-space: pre;
-  overflow: auto;
 }
+
+.code-highlight {
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--editor-text);
+}
+
+.code-editor {
+  resize: none;
+  outline: 0;
+  overflow: auto;
+  background: transparent;
+  /* Text is drawn by the layer underneath; keep the caret and selection. */
+  color: transparent;
+  caret-color: var(--editor-text);
+}
+
+.code-editor::selection {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* C syntax colours */
+.ct-comment { color: #6b7f99; font-style: italic; }
+.ct-preprocessor { color: #c792ea; }
+.ct-string { color: #a5e075; }
+.ct-number { color: #f78c6c; }
+.ct-keyword { color: #ff6b9d; }
+.ct-type { color: #5ccfe6; }
+.ct-function { color: #82aaff; }
+.ct-punct { color: #8fa3bf; }
 
 .io-grid {
   display: grid;
@@ -1371,4 +1410,39 @@ h2 {
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary-dark);
+}
+
+/* Panel show/hide controls */
+.panel-toggles {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.panel-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.panel-toggle:hover {
+  background: var(--hover-bg, rgba(127, 127, 127, 0.14));
+  color: var(--text-primary-dark);
+}
+
+.panel-toggle.is-on {
+  background: var(--accent);
+  color: #ffffff;
 }

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { tokenizeC } from '../lib/cHighlight';
 
 const INDENT = '    ';
 
@@ -38,14 +39,22 @@ interface CodeEditorProps {
 export default function CodeEditor({ value, onChange, errorLines, warningLines }: CodeEditorProps) {
   const textarea = useRef<HTMLTextAreaElement>(null);
   const gutter = useRef<HTMLDivElement>(null);
+  const highlight = useRef<HTMLPreElement>(null);
   const lineCount = Math.max(1, value.split('\n').length);
+  const tokens = useMemo(() => tokenizeC(value), [value]);
 
   useEffect(() => {
     syncScroll();
   }, [value]);
 
   function syncScroll() {
-    if (gutter.current && textarea.current) gutter.current.scrollTop = textarea.current.scrollTop;
+    const node = textarea.current;
+    if (!node) return;
+    if (gutter.current) gutter.current.scrollTop = node.scrollTop;
+    if (highlight.current) {
+      highlight.current.scrollTop = node.scrollTop;
+      highlight.current.scrollLeft = node.scrollLeft;
+    }
   }
 
   /** Replaces the selection while keeping the browser's native undo history. */
@@ -110,17 +119,29 @@ export default function CodeEditor({ value, onChange, errorLines, warningLines }
           );
         })}
       </div>
-      <textarea
-        ref={textarea}
-        className="code-editor"
-        spellCheck={false}
-        wrap="off"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onScroll={syncScroll}
-        aria-label="C source code"
-      />
+      <div className="code-surface">
+        {/* Painted behind the textarea, which is transparent apart from its
+            caret. Both layers share metrics so the text lines up exactly. */}
+        <pre className="code-highlight" ref={highlight} aria-hidden="true">
+          {tokens.map((token, index) => (
+            <span className={'ct-' + token.type} key={index}>
+              {token.text}
+            </span>
+          ))}
+          {'\n'}
+        </pre>
+        <textarea
+          ref={textarea}
+          className="code-editor"
+          spellCheck={false}
+          wrap="off"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={handleKeyDown}
+          onScroll={syncScroll}
+          aria-label="C source code"
+        />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addManager,
   analyzeIdleCode,
@@ -43,18 +43,39 @@ export default function App() {
            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   });
 
-  const [senseiOpen, setSenseiOpen] = useState(true);
+  // Which side panels are open. Remembered per browser so a student who wants
+  // the widest possible editor does not have to collapse them again each visit.
+  const [panels, setPanels] = useState<{ learning: boolean; diagram: boolean; sensei: boolean }>(() => {
+    const stored = localStorage.getItem('jojo_panels');
+    const fallback = { learning: true, diagram: true, sensei: true };
+    if (!stored) return fallback;
+    try {
+      return { ...fallback, ...(JSON.parse(stored) as Partial<typeof fallback>) };
+    } catch {
+      return fallback;
+    }
+  });
+  const senseiOpen = panels.sensei;
+
+  const togglePanel = useCallback((name: 'learning' | 'diagram' | 'sensei') => {
+    setPanels((current) => {
+      const next = { ...current, [name]: !current[name] };
+      localStorage.setItem('jojo_panels', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-        e.preventDefault();
-        setSenseiOpen(o => !o);
-      }
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const target = e.key === '/' ? 'sensei' : e.key === '1' ? 'learning' : e.key === '2' ? 'diagram' : null;
+      if (!target) return;
+      e.preventDefault();
+      togglePanel(target);
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [togglePanel]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -339,8 +360,12 @@ Guide the student toward the next small edit. Do not reveal the full reference a
       <Header 
         theme={theme} 
         onThemeToggle={toggleTheme}
-        senseiOpen={senseiOpen}
-        onSenseiToggle={() => setSenseiOpen(o => !o)}
+        senseiOpen={panels.sensei}
+        onSenseiToggle={() => togglePanel('sensei')}
+        learningOpen={panels.learning}
+        onLearningToggle={() => togglePanel('learning')}
+        diagramOpen={panels.diagram}
+        onDiagramToggle={() => togglePanel('diagram')}
         activeRoom={activeRoom}
         onJoinRoom={() => setShowRoomModal(true)}
         onLeaveRoom={async () => {
@@ -371,7 +396,16 @@ Guide the student toward the next small edit. Do not reveal the full reference a
         />
       )}
 
-      <main className={`app-shell ${!senseiOpen ? 'hide-sensei' : ''}`}>
+      <main
+        className={[
+          'app-shell',
+          panels.learning ? '' : 'hide-learning',
+          panels.diagram ? '' : 'hide-diagram',
+          panels.sensei ? '' : 'hide-sensei',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <LearningPanel
           questions={practiceQuestions}
           selectedQuestion={selectedQuestion}
