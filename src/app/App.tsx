@@ -27,6 +27,7 @@ import {
   type StudentProgress,
 } from './api';
 import DiagramPanel from './DiagramPanel';
+import PanelSplitter from './PanelSplitter';
 import EditorPanel from './EditorPanel';
 import LearningPanel from './LearningPanel';
 import SenseiPanel from './SenseiPanel';
@@ -56,6 +57,31 @@ export default function App() {
     }
   });
   const senseiOpen = panels.sensei;
+
+  // Side panels are sized in px and the editor takes the slack, so a window
+  // resize changes the editor rather than squeezing everything at once.
+  const [widths, setWidths] = useState<{ learning: number; diagram: number; sensei: number }>(() => {
+    const stored = localStorage.getItem('jojo_panel_widths');
+    const fallback = { learning: 300, diagram: 340, sensei: 320 };
+    if (!stored) return fallback;
+    try {
+      return { ...fallback, ...(JSON.parse(stored) as Partial<typeof fallback>) };
+    } catch {
+      return fallback;
+    }
+  });
+
+  const resizePanels = useCallback((changes: Partial<typeof widths>) => {
+    setWidths((current) => {
+      const limit = Math.max(240, window.innerWidth * 0.45);
+      const next = { ...current };
+      for (const [name, value] of Object.entries(changes)) {
+        next[name as keyof typeof next] = Math.round(Math.min(limit, Math.max(180, value as number)));
+      }
+      localStorage.setItem('jojo_panel_widths', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   const togglePanel = useCallback((name: 'learning' | 'diagram' | 'sensei') => {
     setPanels((current) => {
@@ -405,6 +431,17 @@ Guide the student toward the next small edit. Do not reveal the full reference a
         ]
           .filter(Boolean)
           .join(' ')}
+        style={{
+          gridTemplateColumns: [
+            panels.learning ? `${widths.learning}px` : '0px',
+            panels.learning ? 'var(--split-w)' : '0px',
+            'minmax(360px, 1fr)',
+            panels.diagram ? 'var(--split-w)' : '0px',
+            panels.diagram ? `${widths.diagram}px` : '0px',
+            panels.sensei ? 'var(--split-w)' : '0px',
+            panels.sensei ? `${widths.sensei}px` : '0px',
+          ].join(' '),
+        }}
       >
         <LearningPanel
           questions={practiceQuestions}
@@ -418,6 +455,11 @@ Guide the student toward the next small edit. Do not reveal the full reference a
             setTestResults([]);
           }}
           onCheatChange={setSelectedCheatId}
+        />
+        <PanelSplitter
+          label="Resize questions panel"
+          disabled={!panels.learning}
+          onResize={(dx) => resizePanels({ learning: widths.learning + dx })}
         />
         <EditorPanel
           code={code}
@@ -437,7 +479,17 @@ Guide the student toward the next small edit. Do not reveal the full reference a
             setUser(null);
           }}
         />
+        <PanelSplitter
+          label="Resize diagram panel"
+          disabled={!panels.diagram}
+          onResize={(dx) => resizePanels({ diagram: widths.diagram - dx })}
+        />
         <DiagramPanel code={code} theme={theme} />
+        <PanelSplitter
+          label="Resize Sensei panel"
+          disabled={!panels.sensei}
+          onResize={(dx) => resizePanels({ diagram: widths.diagram + dx, sensei: widths.sensei - dx })}
+        />
         <SenseiPanel
           messages={messages}
           draft={draft}

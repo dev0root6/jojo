@@ -111,26 +111,49 @@ button:disabled {
 
 .app-shell {
   display: grid;
-  --col-learning: minmax(260px, 0.72fr);
-  --col-editor: minmax(420px, 1.25fr);
-  --col-diagram: minmax(320px, 0.82fr);
-  --col-sensei: minmax(300px, 0.72fr);
-  grid-template-columns: var(--col-learning) var(--col-editor) var(--col-diagram) var(--col-sensei);
-  gap: 12px;
+  /* Columns are set inline: panel widths in px, the editor takes the slack,
+     and a collapsed panel plus its splitter go to 0px. */
+  --split-w: 10px;
+  gap: 0;
   width: 100vw;
   height: calc(100vh - 52px - 32px);
   padding: 12px;
-  transition: grid-template-columns 0.3s ease;
+  transition: grid-template-columns 0.25s ease;
 }
 
-.app-shell.hide-learning {
-  --col-learning: 0fr;
+/* A drag should track the pointer exactly, so no easing while it happens. */
+body.is-resizing .app-shell {
+  transition: none;
 }
-.app-shell.hide-sensei {
-  --col-sensei: 0fr;
+
+body.is-resizing {
+  cursor: col-resize;
+  user-select: none;
 }
-.app-shell.hide-diagram {
-  --col-diagram: 0fr;
+
+.panel-splitter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.panel-splitter-grip {
+  width: 2px;
+  height: 34px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.panel-splitter:hover .panel-splitter-grip,
+.panel-splitter:focus-visible .panel-splitter-grip {
+  background: var(--accent);
+}
+
+.panel-splitter:focus-visible {
+  outline: none;
 }
 
 .editor-panel,
@@ -359,6 +382,7 @@ h2 {
    identically; every shared metric lives here. */
 .code-highlight,
 .code-editor {
+  overflow-anchor: none;
   position: absolute;
   inset: 0;
   margin: 0;
@@ -451,6 +475,7 @@ h2 {
 }
 
 .mermaid-stage {
+  display: flex;
   flex: 1;
   min-height: 260px;
   overflow: auto;
@@ -458,8 +483,18 @@ h2 {
   background: var(--diagram-bg);
 }
 
+/* auto margins centre the diagram, and collapse to zero once it outgrows the
+   panel, so a large diagram still scrolls from its left edge. */
 .mermaid-stage svg {
   max-width: none;
+  margin: auto;
+}
+
+.mermaid-empty {
+  margin: auto;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .relationship-list {
@@ -531,7 +566,9 @@ h2 {
 }
 
 .cheatsheet {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
@@ -543,6 +580,7 @@ h2 {
 }
 
 .cheat-toc {
+  flex: 0 0 auto;
   max-height: 180px;
   margin: 9px 0 10px;
   overflow: auto;
@@ -598,7 +636,10 @@ h2 {
 }
 
 .cheat-content {
-  height: calc(100% - 238px);
+  /* Take whatever the table leaves, rather than a fixed height that left a
+     gap under short sections. */
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 10px;
   border: 1px solid var(--border-muted);
@@ -1445,4 +1486,25 @@ h2 {
 .panel-toggle.is-on {
   background: var(--accent);
   color: #ffffff;
+}
+
+/* The editor column is the working area; its heading should not take two
+   lines of it. */
+.editor-panel .toolbar h1 {
+  font-size: 17px;
+}
+
+/* Mermaid paints edge labels ("yes"/"no") on an opaque plate that does not
+   follow the panel background. */
+.mermaid-stage .edgeLabel,
+.mermaid-stage .edgeLabel p,
+.mermaid-stage .edgeLabel foreignObject div {
+  background: transparent !important;
+  color: var(--text-secondary, #64748b);
+}
+
+.mermaid-stage .edgeLabel rect,
+.mermaid-stage .labelBkg {
+  fill: var(--diagram-bg) !important;
+  opacity: 1;
 }

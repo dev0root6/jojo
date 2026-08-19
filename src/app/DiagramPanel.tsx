@@ -7,6 +7,23 @@ interface DiagramPanelProps {
   theme?: 'light' | 'dark';
 }
 
+const SANDBOX_ID = 'jojo-mermaid-sandbox';
+
+/**
+ * A parked, zero-sized node for mermaid to measure in. Kept out of the flow so
+ * a re-render cannot change the page height.
+ */
+function measuringSandbox(): HTMLElement {
+  const existing = document.getElementById(SANDBOX_ID);
+  if (existing) return existing;
+  const node = document.createElement('div');
+  node.id = SANDBOX_ID;
+  node.setAttribute('aria-hidden', 'true');
+  node.style.cssText = 'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden;visibility:hidden';
+  document.body.appendChild(node);
+  return node;
+}
+
 export default function DiagramPanel({ code, theme = 'light' }: DiagramPanelProps) {
   const diagramRef = useRef<HTMLDivElement | null>(null);
   const mermaidText = useMemo(() => generateMermaid(code), [code]);
@@ -24,6 +41,7 @@ export default function DiagramPanel({ code, theme = 'light' }: DiagramPanelProp
         primaryTextColor: '#e0e7f5',
         primaryBorderColor: '#4f75f5',
         lineColor: '#7c8fa8',
+        edgeLabelBackground: '#101521',
         secondaryColor: '#1c281e',
         tertiaryColor: '#2a4224',
         fontFamily: 'Inter, ui-sans-serif, system-ui',
@@ -33,6 +51,7 @@ export default function DiagramPanel({ code, theme = 'light' }: DiagramPanelProp
         primaryTextColor: '#172033',
         primaryBorderColor: '#5472d3',
         lineColor: '#6f7787',
+        edgeLabelBackground: '#f7f8fb',
         secondaryColor: '#eef6ed',
         tertiaryColor: '#fff4d8',
         fontFamily: 'Inter, ui-sans-serif, system-ui',
@@ -44,11 +63,14 @@ export default function DiagramPanel({ code, theme = 'light' }: DiagramPanelProp
       if (!diagramRef.current) return;
       try {
         const id = `jojo-diagram-${Math.random().toString(36).slice(2)}`;
-        const result = await mermaid.render(id, mermaidText);
+        // Render into an off-screen node we own. Given no container, mermaid
+        // measures inside document.body, which grows the page and flashes a
+        // scrollbar on every keystroke.
+        const result = await mermaid.render(id, mermaidText, measuringSandbox());
         if (!cancelled && diagramRef.current) diagramRef.current.innerHTML = result.svg;
       } catch {
         if (!cancelled && diagramRef.current) {
-          diagramRef.current.textContent = 'Diagram is waiting for complete C syntax.';
+          diagramRef.current.innerHTML = '<p class="mermaid-empty">Diagram is waiting for complete C syntax.</p>';
         }
       }
     }

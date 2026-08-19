@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { tokenizeC } from '../lib/cHighlight';
 
 const INDENT = '    ';
@@ -43,7 +43,9 @@ export default function CodeEditor({ value, onChange, errorLines, warningLines }
   const lineCount = Math.max(1, value.split('\n').length);
   const tokens = useMemo(() => tokenizeC(value), [value]);
 
-  useEffect(() => {
+  // Before paint, not after: syncing in useEffect leaves one frame where the
+  // highlight layer sits at the old offset, which reads as a flicker.
+  useLayoutEffect(() => {
     syncScroll();
   }, [value]);
 
